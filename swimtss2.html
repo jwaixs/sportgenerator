@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+
+<title>Swim TSS calculator</title>
+
+<head>  
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="./knockout.js"></script>
+
+<style>
+body { 
+  font-family: arial; 
+  font-size: 12px; 
+}
+
+li { 
+  list-style-type: disc; 
+  margin-left: 20px; 
+}
+
+a {
+  font-size: 12px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="container">
+
+<h2>Training Stress Score calculator</h2>
+
+<div id='functionalSwimmingPace'>
+<p>Functional Threshold Pace (m/min): <input data-bind='value: functionalSwimmingPace' /></p>
+<p>Training Stress Score: <input data-bind='value: trainingStressScore' /></p>
+<p>Training time (min): <input data-bind='value: trainingTime' /></p>
+</div>
+
+<div id='exerciseList'>
+<table class='exerciseEditor'>
+  <tr>
+    <th>Training part</th>
+    <th>Set</th>
+    <th>Exercise</th>
+    <th>Repeats</th>
+    <th>Distance (m)</th>
+    <th>Intensity</th>
+    <th>Swim time (min:sec)</th>
+    <th>Rest time (sec)</th>
+    <th>Min repeats</th>
+    <th>Max repeats</th>
+    <th>TSS modifier</th>
+  </tr>
+  <tbody data-bind='foreach: swimTrainingParts'>
+    <tr>
+      <td>
+        <input data-bind='value: swimTrainingPart' />
+      </td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>
+        <input data-bind='value: swimTrainingPartTime' />
+      </td>
+      <td>
+        <input data-bind='value: swimTrainingPartRest' />
+      </td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>
+        <a href='#' data-bind='click: $root.removeTrainingPart'>Delete</a>
+      </td>
+    </tr>
+    <tbody data-bind='foreach: swimSets'>
+      <tr>
+        <td></td>
+        <td>
+          <input data-bind='value: swimSet' />
+        </td>
+        <td></td>
+        <td>
+          <input data-bind='value: swimRepeats' />
+        </td>
+        <td>
+          <input data-bind='value: swimDistance' />
+        </td>
+        <td></td>
+        <td>
+          <input data-bind='value: swimTime' />     
+        </td>
+        <td>
+          <input data-bind='value: swimRest' />
+        </td>
+        <td>
+          <input data-bind='value: swimMinRepeats' />
+        </td>
+        <td>
+          <input data-bind='value: swimMaxRepeats' />
+        </td>
+        <td></td>
+        <td>
+          <a href='#' data-bind='click: $root.addSet'>Add</a>
+        </td>
+        <td>
+          <a href='#' data-bind='click: $root.removeSet'>Delete</a> 
+        </td>
+      </tr>
+      <tbody data-bind='foreach: swimExercises'>
+        <tr>
+          <td></td>
+          <td></td>
+          <td> 
+            <input data-bind='value: swimExercise' /> 
+          </td>
+          <td>
+            <input data-bind='value: swimRepeats' />
+          </td>
+          <td>
+            <input data-bind='value: swimDistance' />
+          </td>
+          <td>
+            <input data-bind='value: swimIntensity' />
+          </td>
+          <td>
+            <input data-bind='value: swimTime' />     
+          </td>
+          <td>
+            <input data-bind='value: swimRest' />
+          </td>
+          <td>
+            <input data-bind='value: swimMinRepeats' />
+          </td>
+          <td>
+            <input data-bind='value: swimMaxRepeats' />
+          </td>
+          <td>
+            <input data-bind='value: swimTSSModifier' />
+          </td>
+          <td>
+            <a href='#' data-bind='click: $root.addExercise'>Add</a>
+          </td>
+          <td>
+            <a href='#' data-bind='click: $root.removeExercise'>Delete</a> 
+          </td>
+        </tr>
+      </tbody>
+    </tbody>
+  </tbody>
+</table>
+</div>
+ 
+<p>
+<button data-bind='click: addExercise'>Add exercise</button>
+<button data-bind='click: computeExerciseSwimTime, enable: exercises().length > 0'>Calculate Swim Time Repeats</button>
+<button data-bind='click: computeRepeats, enable: exercises().length > 0'>Generate Training</button>
+<button data-bind='click: computeDistance, enable: exercises().length > 0'>Calculate Distance</button>
+<button data-bind='click: computeTSS, enable: exercises().length > 0'>Calculate Training Stress Score</button>
+<button data-bind='click: computeSwimTime, enable: exercises().length > 0'>Calculate Total Swim Time</button>
+</p>
+
+<p>
+Total distance: <span data-bind='text: totalDistance'></span> <br />
+Total Training Stress Score: <span data-bind='text: totalTrainingStressScore'></span><br />
+Total training time: <span data-bind='text: totalTrainingTime'></span><br />
+</p>
+
+<p id="copyright">
+Created by Noud Aldenhoven and Roeland Smits.
+</p>
+</div>
+
+<script src='./tss.js'></script>
+
+
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!doctype html>
+<html>
+
+<title>Swim TSS calculator</title>
+
+<head>  
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="./knockout.js"></script>
+
+<style>
+body { 
+  font-family: arial; 
+  font-size: 12px; 
+}
+
+li { 
+  list-style-type: disc; 
+  margin-left: 20px; 
+}
+
+a {
+  font-size: 12px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="container">
+
+<h2>Training Stress Score calculator</h2>
+
+<div id='functionalSwimmingPace'>
+<p>Functional Threshold Pace (m/min): <input data-bind='value: functionalSwimmingPace' /></p>
+<p>Training Stress Score: <input data-bind='value: trainingStressScore' /></p>
+<p>Training time (min): <input data-bind='value: trainingTime' /></p>
+</div>
+
+<div id='exerciseList'>
+<table class='exerciseEditor'>
+  <tr>
+    <th>Exercise</th>
+    <th>Repeats</th>
+    <th>Distance (m)</th>
+    <th>Intensity</th>
+    <th>Swim time (min:sec)</th>
+    <th>Rest time (sec)</th>
+    <th>Min repeats</th>
+    <th>Max repeats</th>
+    <th>TSS modifier</th>
+  </tr>
+  <tbody data-bind="foreach: exercises">
+    <tr>
+      <td> 
+        <input data-bind='value: swimExercise' size="50" /> 
+      </td>
+      <td>
+        <input data-bind='value: swimRepeats' />
+      </td>
+      <td>
+        <input data-bind='value: swimDistance' />
+      </td>
+      <td>
+        <input data-bind='value: swimIntensity' />
+      </td>
+      <td>
+        <input data-bind='value: swimTime' />     
+      </td>
+      <td>
+        <input data-bind='value: swimRest' />
+      </td>
+      <td>
+        <input data-bind='value: swimMinRepeats' />
+      </td>
+      <td>
+        <input data-bind='value: swimMaxRepeats' />
+      </td>
+      <td>
+        <input data-bind='value: swimTSSModifier' />
+      </td>
+      <td>
+        <a href='#' data-bind='click: $root.removeExercise'>Delete</a> 
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+ 
+<p>
+<button data-bind='click: addExercise'>Add exercise</button>
+<button data-bind='click: computeExerciseSwimTime, enable: exercises().length > 0'>Calculate Swim Time Repeats</button>
+<button data-bind='click: computeRepeats, enable: exercises().length > 0'>Generate Training</button>
+<button data-bind='click: computeDistance, enable: exercises().length > 0'>Calculate Distance</button>
+<button data-bind='click: computeTSS, enable: exercises().length > 0'>Calculate Training Stress Score</button>
+<button data-bind='click: computeSwimTime, enable: exercises().length > 0'>Calculate Total Swim Time</button>
+</p>
+
+<p>
+Total distance: <span data-bind='text: totalDistance'></span> <br />
+Total Training Stress Score: <span data-bind='text: totalTrainingStressScore'></span><br />
+Total training time: <span data-bind='text: totalTrainingTime'></span><br />
+</p>
+
+<p id="copyright">
+Created by Noud Aldenhoven and Roeland Smits.
+</p>
+</div>
+
+<script>
+/* Overglider technique training */
+var initialData = [
+  {
+    swimExercise: "Warming-up: normal f/s - 2x breathing 50m left + 50m normal",
+    swimRepeats: "", 
+    swimDistance: "200",
+    swimIntensity: "0.7",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "1",
+    swimMaxRepeats: "1",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Warming-up: fins up-arrow 6/1/6 down-arrow f/s",
+    swimRepeats: "", 
+    swimDistance: "200",
+    swimIntensity: "0.7",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "1",
+    swimMaxRepeats: "1",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Warming-up: normal f/s - 2x breathing 50m right + 50m normal",
+    swimRepeats: "", 
+    swimDistance: "200",
+    swimIntensity: "0.7",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "0",
+    swimMaxRepeats: "1",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Warming-up: pull buoy - 15m scull #1 + 85m f/s",
+    swimRepeats: "", 
+    swimDistance: "200",
+    swimIntensity: "0.7",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "0",
+    swimMaxRepeats: "1",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Warming-up: normal easy f/s - nice and relaxed",
+    swimRepeats: "", 
+    swimDistance: "200",
+    swimIntensity: "0.7",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "0",
+    swimMaxRepeats: "1",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Build: 50m pull buoy + R10s",
+    swimRepeats: "", 
+    swimDistance: "50",
+    swimIntensity: "0.8",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "4",
+    swimMaxRepeats: "16",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Main: 50m, odd numbers drills and even numbers 25m fast, 25m easy",
+    swimRepeats: "", 
+    swimDistance: "50",
+    swimIntensity: "1.1",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "10",
+    swimMaxRepeats: "60",
+    swimTSSModifier: "1.0",
+  },
+  {
+    swimExercise: "Cooling-down: 50m rest, decending speed by 2 sec per 50m, finish very slow",
+    swimRepeats: "", 
+    swimDistance: "50",
+    swimIntensity: "0.7",
+    swimTime: "", 
+    swimRest: "10",
+    swimMinRepeats: "4",
+    swimMaxRepeats: "6",
+    swimTSSModifier: "1.0",
+  },
+];
+
+/* Bambino endurance training */
+
+//var initialData = [
+//  { 
+//    swimExercise: "Warming-up",
+//    swimRepeats: "", 
+//    swimDistance: "200",
+//    swimIntensity: "0.7",
+//    swimTime: "", 
+//    swimMinRepeats: "1",
+//    swimMaxRepeats: "1",
+//    swimTSSModifier: "1.0",
+//  },
+//  {
+//    swimExercise: "Drills",
+//    swimRepeats: "", 
+//    swimDistance: "50",
+//    swimIntensity: "0.8",
+//    swimTime: "", 
+//    swimMinRepeats: "2",
+//    swimMaxRepeats: "8",
+//    swimTSSModifier: "1.0",
+//  },
+//  {
+//    swimExercise: "Main set",
+//    swimRepeats: "",
+//    swimDistance: "100",
+//    swimIntensity: "1.1",
+//    swimTime: "", 
+//    swimMinRepeats: "5",
+//    swimMaxRepeats: "20",
+//    swimTSSModifier: "1.0",
+//  },
+//  {
+//    swimExercise: "Cooling-down",
+//    swimRepeats: "",
+//    swimDistance: "200",
+//    swimIntensity: "0.7",
+//    swimTime: "", 
+//    swimMinRepeats: "1",
+//    swimMaxRepeats: "1",
+//    swimTSSModifier: "1.0",
+//  }
+//];
+
+// attach the .equals method to Array's prototype to call it on any array
+Array.prototype.equals = function (array) {
+  if (!array)
+    return false;
+
+  if (this.length != array.length)
+    return false;
+
+  for (var i = 0, l=this.length; i < l; i++) {
+    if (this[i] instanceof Array && array[i] instanceof Array) {
+      if (!this[i].equals(array[i]))
+        return false;       
+    }           
+    else if (this[i] != array[i]) { 
+      return false;   
+    }           
+  }       
+  return true;
+}
+
+var TrainingStressScore = function(functionalSwimmingPace, distance, time) {
+  var averagePace = distance / time * 60;
+  var intensityFactor = averagePace/functionalSwimmingPace;
+
+  if (distance == 0 || time == 0) {
+    return 0.0;
+  }
+
+  return intensityFactor * intensityFactor * intensityFactor * (time / (60*60)) * 100;
+};
+ 
+var ExercisesModel = function(exercises) {
+  var self = this;
+
+  self.exercises = ko.observableArray(ko.utils.arrayMap(exercises, function(exercise) {
+    return { 
+      swimExercise : exercise.swimExercise, 
+      swimRepeats : ko.observable(exercise.swimRepeats), 
+      swimDistance : exercise.swimDistance, 
+      swimIntensity : exercise.swimIntensity,
+      swimTime : ko.observable(exercise.swimTime), 
+      swimRest: exercise.swimRest,
+      swimMinRepeats : exercise.swimMinRepeats,
+      swimMaxRepeats : exercise.swimMaxRepeats,
+      swimTSSModifier : exercise.swimTSSModifier,
+    };
+  }));
+  self.functionalSwimmingPace = ko.observable("75"); 
+  self.trainingStressScore = ko.observable("60"); // 34
+  self.trainingTime = ko.observable("50"); // 23
+  self.totalDistance = ko.observable("");
+  self.totalTrainingTime = ko.observable("");
+  self.totalTrainingStressScore = ko.observable("");
+  
+
+  self.addExercise = function() {
+    self.exercises.push({
+      swimExercise: "",
+      swimRepeats: ko.observable(""),
+      swimDistance: "",
+      swimIntensity: "",
+      swimTime: ko.observable(""),
+      swimRest: "",
+      swimMinRepeats: "",
+      swimMaxRepeats: "",
+      swimTSSModifier: "",
+    });
+  };
+
+  self.removeExercise = function(exercise) {
+    self.exercises.remove(exercise);
+  };
+
+  self.computeTSS = function() {
+    var totalTSS = 0.0;
+
+    ko.utils.arrayForEach(this.exercises(), function(exercise) {
+      var splittime = exercise.swimTime().split(":");
+      totalTSS += TrainingStressScore(
+        self.functionalSwimmingPace(), 
+        exercise.swimRepeats() * exercise.swimDistance, 
+        exercise.swimRepeats() * (parseInt(splittime[0])*60+parseInt(splittime[1]))
+      );
+    });
+
+    self.totalTrainingStressScore(totalTSS.toFixed(2));
+  };
+
+  self.computeDistance = function() {
+    var distance = 0;
+
+    ko.utils.arrayForEach(this.exercises(), function(exercise) {
+      distance += exercise.swimRepeats() * exercise.swimDistance;
+    });
+
+    self.totalDistance(distance);
+  }
+
+  self.computeExerciseSwimTime = function() {
+    ko.utils.arrayForEach(this.exercises(), function(exercise) {
+      var stime = exercise.swimDistance / (self.functionalSwimmingPace() * exercise.swimIntensity);
+      var minutes = Math.floor(stime);
+      var seconds = Math.round(60*(stime - Math.floor(stime)));
+
+      if (seconds == 60) {
+        seconds = 0;
+        minutes += 1;
+      }
+
+      if (0 < seconds && seconds < 10) {
+        exercise.swimTime(minutes + ":0" + seconds);
+      } else if (seconds == 0) {
+        exercise.swimTime(minutes + ":00");
+      } else {
+        exercise.swimTime(minutes + ":" + seconds);
+      }
+    });
+  }
+
+  self.computeSwimTime = function() {
+    var totalSwimTime = 0;
+
+    ko.utils.arrayForEach(this.exercises(), function(exercise) {
+      var splittime = exercise.swimTime().split(":");
+      console.log((parseInt(splittime[0])*60 + parseInt(splittime[1])) + exercise.swimRest);
+      totalSwimTime += exercise.swimRepeats() 
+        * ((parseInt(splittime[0])*60 + parseInt(splittime[1])) + parseInt(exercise.swimRest));
+    });
+
+    self.totalTrainingTime(Math.round(totalSwimTime/60));
+  }
+
+  self.computeRepeats = function() {
+    var minTime = 0;
+    var minTSS = 0;
+    var maxTime = 0;
+    var maxTSS = 0;
+
+    
+    ko.utils.arrayForEach(this.exercises(), function(exercise) {
+      var splittime = exercise.swimTime().split(":");
+
+      minTSS += TrainingStressScore(
+        self.functionalSwimmingPace(), 
+        exercise.swimMinRepeats * exercise.swimDistance, 
+        exercise.swimMinRepeats * (parseInt(splittime[0])*60+parseInt(splittime[1]))
+      );
+      minTime += exercise.swimMinRepeats 
+        * (parseInt(splittime[0])*60+parseInt(splittime[1]) + parseInt(exercise.swimRest));
+
+      maxTSS += TrainingStressScore(
+        self.functionalSwimmingPace(), 
+        exercise.swimMaxRepeats * exercise.swimDistance, 
+        exercise.swimMaxRepeats * (parseInt(splittime[0])*60+parseInt(splittime[1]))
+      );
+      maxTime += exercise.swimMaxRepeats 
+        * (parseInt(splittime[0])*60+parseInt(splittime[1]) + parseInt(exercise.swimRest));
+    });
+
+    if (self.trainingStressScore() < minTSS 
+        || self.trainingStressScore() > maxTSS 
+        || self.trainingTime()*60 < minTime
+        || self.trainingTime()*60 > maxTime) {
+      alert('Impossible to find a good training.'
+        + '\nTSS: ' + self.trainingStressScore() 
+        + '\nminTSS: ' + minTSS.toFixed(2) + '\nmaxTSS: ' + maxTSS.toFixed(2)
+        + '\nTime: ' + self.trainingTime()*60
+        + '\nminTime: ' + Math.round(minTime/60) + '\nmaxTime: ' + Math.round(maxTime/60));
+      return;
+    }
+
+    var curRepeats = [];
+    var curTSS = minTSS;
+    var curTime = minTime;
+    var curValue = Math.pow((self.trainingStressScore() - curTSS), 2) 
+                 + Math.pow((self.trainingTime()*60 - curTime), 2);
+    var bestRepeats = [];
+    var bestValue = curValue;
+    var minRepeats = [];
+    var maxRepeats = [];
+
+    ko.utils.arrayForEach(this.exercises(), function(exercise) {
+      bestRepeats[bestRepeats.length] = parseInt(exercise.swimMinRepeats);
+      curRepeats[curRepeats.length] = parseInt(exercise.swimMinRepeats);
+      maxRepeats[maxRepeats.length] = parseInt(exercise.swimMaxRepeats);
+    });
+
+    minRepeats = curRepeats.slice(0);
+
+    var generateAllRepeatProducts = function(curRep, minRep, maxRep) {
+      if (curRep.length == minRep.length) {
+        return [curRep];
+      }
+
+      var retRepList = [];
+      for (var i = minRep[curRep.length]; i <= maxRep[curRep.length]; i++) {
+        retRepList.push.apply(retRepList, 
+          generateAllRepeatProducts([].concat(curRep, [i]), minRep, maxRep));
+      }
+      return retRepList;
+    };
+
+    generateAllRepeatProducts([], minRepeats, maxRepeats).forEach(function(curRepeats) {
+      curTSS = 0;
+      curTime = 0;
+
+      for (var i = 0; i < curRepeats.length; i++) {
+        var splittime = self.exercises()[i].swimTime().split(':');
+
+        curTSS += TrainingStressScore(
+          self.functionalSwimmingPace(),
+          curRepeats[i] * self.exercises()[i].swimDistance,
+          curRepeats[i] * (parseInt(splittime[0])*60+parseInt(splittime[1]))
+        );
+        curTime += curRepeats[i] 
+          * (parseInt(splittime[0])*60+parseInt(splittime[1]) + parseInt(self.exercises()[i].swimRest));
+      }
+
+      curValue = Math.pow((self.trainingStressScore() - curTSS), 2)
+                + Math.pow((self.trainingTime()*60 - curTime), 2);
+
+      if (curValue < bestValue) {
+        bestRepeats = curRepeats.slice(0); // HACK ALERT!
+        bestValue = curValue;
+      } 
+    });
+
+    for (var i = 0; i < bestRepeats.length; i++) {
+      self.exercises()[i].swimRepeats(bestRepeats[i]);
+    }
+  }
+};
+ 
+ko.applyBindings(new ExercisesModel(initialData));
+</script>
+
+
+</body>
+</html>

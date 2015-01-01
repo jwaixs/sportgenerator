@@ -1,0 +1,52 @@
+<html>
+
+<head>
+<title>Test jquery</title>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $("#generateButton").click(function() {
+    console.log("Swim style: " + $(":radio[name=swimType]").val());
+    console.log("Focus: " + $(":radio[name=swimTraining]").val());
+    console.log("Speed: " + $(":radio[name=swimSpeed]").val());
+  
+    $("#trainingTextBox").fadeIn("slow");
+  });
+});
+</script>
+
+</head>
+
+<body>
+
+Choose your swimstyle: <br>
+<input type="radio" name="swimType" value="arnie">Arnie</input><br>
+<input type="radio" name="swimType" value="bambino">Bambino</input><br>
+<input type="radio" name="swimType" value="kicktastic">Kicktastic</input><br>
+<input type="radio" name="swimType" value="overglider">Overglider</input><br>
+<input type="radio" name="swimType" value="swinger">Swinger</input><br>
+<input type="radio" name="swimType" value="smooth">Smooth</input><br>
+<input type="radio" name="swimType" value="random">Random</input><br><br>
+
+Choose your training or focus: <br>
+<input type="radio" name="swimTraining" value="technique">Technique</input><br>
+<input type="radio" name="swimTraining" value="treshold">Threshold/CSS</input><br>
+<input type="radio" name="swimTraining" value="sprint">Sprint</input><br>
+<input type="radio" name="swimTraining" value="openwater">Open Water</input><br>
+<input type="radio" name="swimTraining" value="endurance">Endurance</input><br>
+<input type="radio" name="swimTraining" value="random">Random</input><br><br>
+
+Critical swimspeed: (leave blank if not known)<br>
+<input type="radio" name="swimSpeed" value="novice">Novice (>2:00/100m)</input><br>
+<input type="radio" name="swimSpeed" value="intermediate">Intermediate (2:00/100m till 1:30/100m)</input><br>
+<input type="radio" name="swimSpeed" value="advanced">Advanced (<1:30/100m)</input><br>
+
+<button id="generateButton">Generate your training</button>
+
+<p id="trainingTextBox" style="display:none">This is the training.</p>
+
+</body>
+
+</html>

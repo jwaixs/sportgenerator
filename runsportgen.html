@@ -1,0 +1,282 @@
+<html>
+
+<title>Run generator</title>
+
+<head>  
+<script src="./taffy.js"></script>
+<script src="./runtrainingdb.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $("#generateButton").click(function() {
+    var swimType = $(':radio[name=swimType]:checked').val();
+    var swimTraining = $(':radio[name=swimTraining]:checked').val();
+    var swimSpeed = $(':radio[name=swimSpeed]:checked').val();
+    var swimPool = $(':radio[name=swimPool]:checked').val();
+
+    console.log('Swim type: ' + swimType + '\n' + 'Swim training: ' + swimTraining + '\n' + 'Swim speed: ' + swimSpeed + '\n' + 'Swimming pool: ' + swimPool);
+
+    var training = generateTraining(swimType, swimTraining, swimSpeed, swimPool);
+
+    $('#trainingTextBox').fadeOut('slow');
+    $('#trainingTextBox').promise().done(function() {
+      if (training[1] != 0) {
+        $('#trainingTextBox').html(training[0] + '<p id="totaldistance">Total distance: ' + training[1] + '.</p>');
+      } else {
+        $('#trainingTextBox').html(training[0]);
+      }
+      $('#trainingTextBox').fadeIn('slow');
+    });
+  });
+});
+
+function generateTraining(swimType, swimTraining, swimSpeed, swimPool) {
+  var trainingText = '';
+  var totalDistance = 0;
+  var swimTypes = ['arnie', 'bambino', 'kicktastic', 'overglider', 'swinger', 'smooth'];
+  var swimTrainings = ['technique', 'threshold', 'sprint', 'openwater', 'endurance'];
+
+  if ((swimType == 'swinger' || swimType == 'smooth') 
+        && (swimSpeed == 'novice' || swimSpeed == 'intermediate')) {
+    return ['Your critical swim speed is to slow for this training.', 0];
+  }
+
+  if (swimTraining == 'random') {
+    var swimTraining = swimTrainings[Math.floor(Math.random() * 5)];
+  } 
+  
+  /* Is Endurance training? */
+  if (swimTraining == 'endurance') {
+    if (swimType == 'random') {
+      /* Random generator */
+      if (swimSpeed == 'advanced') {
+        var ss = swimTypes[Math.floor(Math.random() * 6)];
+      } else {
+        var ss = swimTypes[Math.floor(Math.random() * 4)];
+      }
+    } else {
+      var ss = swimType;
+    }
+
+    var endurancetraining = trainingdb({swimmer : ss, focus : swimTraining, speed : swimSpeed}).first();
+ 
+    console.log('Endurance: ' + ss);
+ 
+    trainingText = "<h2 id=\"training\">Endurance:</h2>" 
+      + "<p id=\"slogan\">" + endurancetraining.slogan + "</p>"
+      + "<p id=\"program\">" + endurancetraining.training;
+    
+    trainingDistance = endurancetraining.distance;
+    
+    return [trainingText, trainingDistance];
+  }
+
+  /* Warming up */
+  if (swimType == 'random') {
+    /* Random generator */
+    if (swimSpeed == 'advanced') {
+      var wuptr = swimTypes[Math.floor(Math.random() * 6)];
+    } else {
+      var wuptr = swimTypes[Math.floor(Math.random() * 4)];
+    }
+  } else {
+    var wuptr = swimType;
+  }
+  
+  var warmingup = trainingdb({trainingpart : "warmingup", swimmer : wuptr, speed : swimSpeed, pool : swimPool}).first();
+
+  console.log('warmingup:' + wuptr);
+
+  trainingText += "<h2 id=\"training\">Warming-up:</h2>" 
+    + "<p id=\"slogan\">" + warmingup.slogan + "</p>"
+    + "<p id=\"program\">" + warmingup.training + "</p>"
+    + "<p id=\"distance\">Distance: " + warmingup.distance + "</p>";
+
+  totalDistance += warmingup.distance; 
+
+  /* Build set */
+  if (swimType == 'random') {
+    /* Random generator */
+    if (swimSpeed == 'advanced') {
+      var buildtr = swimTypes[Math.floor(Math.random() * 6)];
+    } else {
+      var buildtr = swimTypes[Math.floor(Math.random() * 4)];
+    }
+  } else {
+    var buildtr = swimType;
+  }
+
+  var buildtraining = trainingdb({trainingpart : "build", swimmer : buildtr, speed : swimSpeed, pool : swimPool}).first();
+
+  console.log('build:' + buildtr);
+
+  trainingText += "<h2 id=\"training\">Build:</h2>" 
+    + "<p id=\"slogan\">" + buildtraining.slogan + "</p>"
+    + "<p id=\"program\">" + buildtraining.training + "</p>"
+    + "<p id=\"distance\">Distance: " + buildtraining.distance + "</p>";
+
+  totalDistance += buildtraining.distance; 
+
+  
+  /* Main set */ 
+  if (swimType == 'random') {
+    /* Random generator */
+    if (swimSpeed == 'advanced') {
+      var maintr = swimTypes[Math.floor(Math.random() * 6)];
+    } else {
+      var maintr = swimTypes[Math.floor(Math.random() * 4)];
+    }
+  } else {
+    var maintr = swimType;
+  }
+
+
+  var maintraining = trainingdb({trainingpart : "main", swimmer : maintr, focus : swimTraining, speed : swimSpeed, pool : swimPool}).first();
+
+  console.log('main:' + maintr + ',' + swimTraining);
+
+  trainingText += "<h2 id=\"training\">Main:</h2>" 
+    + "<p id=\"slogan\">" + maintraining.slogan + "</p>"
+    + "<p id=\"program\">" + maintraining.training + "</p>"
+    + "<p id=\"distance\">Distance: " + maintraining.distance + "</p>";
+
+  totalDistance += maintraining.distance; 
+  
+  /* Cooling down */ 
+  if (swimType == 'random') {
+    /* Random generator */
+    if (swimSpeed == 'advanced') {
+      var cdtr = swimTypes[Math.floor(Math.random() * 6)];
+    } else {
+      var cdtr = swimTypes[Math.floor(Math.random() * 4)];
+    }
+  } else {
+    var cdtr = swimType;
+  }
+
+  var cdtraining = trainingdb({trainingpart : "coolingdown", swimmer : cdtr}).first();
+
+  console.log('coolingdown:' + buildtr);
+
+  trainingText += "<h2 id=\"training\">Cooling down:</h2>" 
+    + "<p id=\"slogan\">" + cdtraining.slogan + "</p>"
+    + "<p id=\"program\">" + cdtraining.training + "</p>"
+    + "<p id=\"distance\">Distance: " + cdtraining.distance + "</p>";
+
+  totalDistance += cdtraining.distance; 
+
+  return [trainingText, totalDistance];
+}
+
+</script>
+
+<style>
+body {
+  margin: 5px;
+  padding: 5px;
+  font-family: georgia, times, "times new roman", serif;
+}
+
+#container {
+  width: 1024px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#leftPage {
+  float: left;
+  width: 40%;
+  height: 80%;
+}
+
+#rightPage {
+  float: right;
+  width: 60%;
+  height: 80%;
+}
+
+#copyright {
+  font-style : italic;
+  font-size: 90%;
+}
+
+.training {
+  float: right;
+  width: 50%;
+  height: 150%;
+}
+
+h2#training {
+  font-weight: bold;
+  font-size: 120%;
+}
+
+p#slogan {
+  font-style:italic;
+}
+
+p#distance {
+  font-size: 80%;
+}
+
+p#totaldistance {
+  font-size: 110%;
+  font-weight: bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="container">
+
+<p>
+This training generator program is based on Daniel's running formula.
+</p>
+
+<hr>
+
+<div id="leftPage">
+<p>
+Your discipline or distance: <br>
+<input type="radio" name="runDistance" value="5km">5 kilometers</input><br>
+<input type="radio" name="runDistance" value="cc">Cross country</input><br><br>
+
+Your VDOT: <br>
+<input type="text" name="runVDOT"></input><br><br>
+
+How long you want to run: <br>
+<input type="text" name="runDistance"></input><br>
+<input type="radio" name="runDistanceType" value="min">Minutes</input><br>
+<input type="radio" name="runDistanceType" value="km">Kilometers</input><br><br>
+
+Season fase:<br>
+<input type="radio" name="runFase" value="1">Fase 1</input><br>
+<input type="radio" name="runFase" value="2">Fase 2</input><br>
+<input type="radio" name="runFase" value="3">Fase 3</input><br>
+<input type="radio" name="runFase" value="4">Fase 4</input><br><br>
+
+Training type:<br>
+<input type="radio" name="runType" value="Q1">First quality training</input><br>
+<input type="radio" name="runType" value="Q2">Second quality training</input><br>
+<input type="radio" name="runType" value="L">Long run</input><br>
+<input type="radio" name="runType" value="E">Easy run</input><br><br>
+
+<button id="generateButton">Generate your training</button>
+</p>
+<br>
+<p id="copyright">
+Created by Noud Aldenhoven.
+</p>
+</div>
+
+<div id="rightPage">
+<p id="trainingTextBox" style="display:none">This is your training.</p>
+</div>
+
+</div>
+
+</body>
+</html>
